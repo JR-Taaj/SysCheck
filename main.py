@@ -659,11 +659,11 @@ class MPlusApp(customtkinter.CTk):
     def _logout(self):
         self._show_login_page()
 
-REMOTE_FILE_URL = "https://raw.githubusercontent.com/JR-Taaj/SysCheck/refs/heads/main/main.py?token=GHSAT0AAAAAADCC45TXQEOI7TMXMSAA6KZO2BCEPIQ"
+REMOTE_FILE_URL = "https://raw.githubusercontent.com/JR-Taaj/SysCheck/refs/heads/main/main.py"
 # URL de la version à jour du fichier (version.txt)
-REMOTE_VERSION_URL = "https://raw.githubusercontent.com/JR-Taaj/SysCheck/refs/heads/main/version.txt?token=GHSAT0AAAAAADCC45TWWPIK4B4I3QNOWQJM2BCEPQA"
+REMOTE_VERSION_URL = "https://raw.githubusercontent.com/JR-Taaj/SysCheck/refs/heads/main/version.txt"
 LOCAL_FILE_PATH = "BETA/main.py"  # Le fichier local à vérifier
-LOCAL_VERSION_PATH = "version.txt"  # Le fichier version local
+LOCAL_VERSION_PATH = "BETA/version.txt"  # Le fichier version local
 
 def get_remote_version():
     """Télécharge et retourne la version distante."""
@@ -703,11 +703,11 @@ def check_for_update():
 def update_file():
     """Télécharge le code à jour depuis GitHub et remplace le fichier local."""
     try:
-        latest_code = urllib.request.urlopen(REMOTE_FILE_URL).read().decode('utf-8')
-        
-        with open(LOCAL_FILE_PATH, 'w', encoding='utf-8') as local_file:
-            local_file.write(latest_code)
-        
+        r = requests.get(REMOTE_FILE_URL)
+        r.raise_for_status()
+        with open(LOCAL_FILE_PATH, "wb") as f:      # ← mode binaire
+            f.write(r.content)        
+            
         # Met à jour le fichier version.txt pour refléter la nouvelle version
         with open(LOCAL_VERSION_PATH, 'w', encoding='utf-8') as version_file:
             version_file.write(get_remote_version())
