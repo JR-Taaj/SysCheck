@@ -4,6 +4,11 @@ import tkinter
 import customtkinter
 from PIL import ImageTk, Image
 import textwrap
+import urllib.request
+import sys
+import os
+import requests
+
 
 # Configuration de l'apparence
 customtkinter.set_appearance_mode("System")
@@ -654,7 +659,65 @@ class MPlusApp(customtkinter.CTk):
     def _logout(self):
         self._show_login_page()
 
+REMOTE_FILE_URL = "https://raw.githubusercontent.com/JR-Taaj/SysCheck/refs/heads/main/main.py?token=GHSAT0AAAAAADCC45TXQEOI7TMXMSAA6KZO2BCEPIQ"
+# URL de la version à jour du fichier (version.txt)
+REMOTE_VERSION_URL = "https://raw.githubusercontent.com/JR-Taaj/SysCheck/refs/heads/main/version.txt?token=GHSAT0AAAAAADCC45TWWPIK4B4I3QNOWQJM2BCEPQA"
+LOCAL_FILE_PATH = "BETA/main.py"  # Le fichier local à vérifier
+LOCAL_VERSION_PATH = "version.txt"  # Le fichier version local
+
+def get_remote_version():
+    """Télécharge et retourne la version distante."""
+    try:
+        response = requests.get(REMOTE_VERSION_URL)
+        response.raise_for_status()  # Lève une exception si le statut HTTP n'est pas OK
+        return response.text.strip()
+    except requests.exceptions.RequestException as e:
+        print(f"Erreur lors de la récupération de la version distante : {e}")
+        return None
+
+def get_local_version():
+    """Retourne la version locale à partir du fichier version.txt."""
+    if os.path.exists(LOCAL_VERSION_PATH):
+        with open(LOCAL_VERSION_PATH, 'r', encoding='utf-8') as file:
+            return file.read().strip()
+    return None
+
+def check_for_update():
+    """Vérifie s'il y a une mise à jour disponible et met à jour le fichier si nécessaire."""
+    remote_version = get_remote_version()
+    local_version = get_local_version()
+    
+    if remote_version is None:
+        print("❌ Impossible de récupérer la version distante.")
+        return
+    
+    print(f"Version locale : {local_version if local_version else 'Non disponible'}")
+    print(f"Version distante : {remote_version}")
+
+    if local_version != remote_version:
+        print("🆕 Mise à jour disponible ! Téléchargement du nouveau code...")
+        update_file()
+    else:
+        print("✅ Le fichier est déjà à jour.")
+
+def update_file():
+    """Télécharge le code à jour depuis GitHub et remplace le fichier local."""
+    try:
+        latest_code = urllib.request.urlopen(REMOTE_FILE_URL).read().decode('utf-8')
+        
+        with open(LOCAL_FILE_PATH, 'w', encoding='utf-8') as local_file:
+            local_file.write(latest_code)
+        
+        # Met à jour le fichier version.txt pour refléter la nouvelle version
+        with open(LOCAL_VERSION_PATH, 'w', encoding='utf-8') as version_file:
+            version_file.write(get_remote_version())
+        
+        print("✅ Mise à jour réussie. Le fichier a été remplacé.")
+    except Exception as e:
+        print(f"❌ Erreur lors de la mise à jour du fichier : {e}")
+
 if __name__ == "__main__":
+    check_for_update()
     initialize_database()
     app = MPlusApp()
     app.mainloop()
